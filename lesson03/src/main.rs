@@ -86,6 +86,7 @@ impl ListNode {
                         let mut node = ListNode::new(1u8);
                         node.next = reversed;
                         reversed = Some(Box::new(node));
+                        over = false;
                     } else {
                         break;
                     }
