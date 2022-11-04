@@ -1,11 +1,7 @@
 // replace value inside option if it is some to b: Box<i64>
 // you can't use pattern matching
 pub fn replace_value_inside_option(op: Option<i32>, b: Box<i64>) -> Option<Box<i64>> {
-    if op.is_some() {
-        Some(b)
-    } else {
-        None
-    }
+    op.map(|_| b)
 }
 
 // function should return count of items in collection c
