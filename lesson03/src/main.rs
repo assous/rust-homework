@@ -31,8 +31,8 @@ impl ListNode {
     }
 
     pub fn add_other(self, other: ListNode) -> ListNode {
-        let mut first = &Some(Box::new(self));
-        let mut second = &Some(Box::new(other));
+        let mut first = Some(Box::new(self));
+        let mut second = Some(Box::new(other));
         let mut over: bool = false;
         let mut reversed = None;
         let mut result = None;
@@ -50,8 +50,8 @@ impl ListNode {
                     let mut node = ListNode::new(value);
                     node.next = reversed;
                     reversed = Some(Box::new(node));
-                    first = &first_item.next;
-                    second = &second_item.next;
+                    first = first_item.next;
+                    second = second_item.next;
                 }
                 (Some(first_item), None) => {
                     let mut value = *first_item.val + over as u8;
@@ -64,8 +64,8 @@ impl ListNode {
                     let mut node = ListNode::new(value);
                     node.next = reversed;
                     reversed = Some(Box::new(node));
-                    first = &first_item.next;
-                    second = &None;
+                    first = first_item.next;
+                    second = None;
                 }
                 (None, Some(second_item)) => {
                     let mut value = *second_item.val + over as u8;
@@ -78,18 +78,16 @@ impl ListNode {
                     let mut node = ListNode::new(value);
                     node.next = reversed;
                     reversed = Some(Box::new(node));
-                    second = &second_item.next;
-                    first = &None;
+                    second = second_item.next;
+                    first = None;
                 }
                 (None, None) => {
                     if over {
                         let mut node = ListNode::new(1u8);
                         node.next = reversed;
                         reversed = Some(Box::new(node));
-                        over = false;
-                    } else {
-                        break;
                     }
+                    break;
                 }
             }
         }
