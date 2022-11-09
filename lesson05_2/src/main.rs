@@ -4,7 +4,20 @@
 // if error contains Custom::Reason you should format as data from reason (look into tests)
 // else format as is
 fn error_handler(error: anyhow::Error) -> String {
-    todo!()
+    let error_str = error.to_string();
+
+    if error_str.starts_with("Custom::One") {
+        error_str.replace(" error", "")
+    } else if error_str.starts_with("Custom::Reason") {
+        error_str
+            .chars()
+            .skip_while(|&x| x != '(')
+            .skip(1)
+            .take_while(|&x| x != ')')
+            .collect()
+    } else {
+        error_str
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
