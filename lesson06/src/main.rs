@@ -26,30 +26,42 @@ impl Cache<'_, '_> {
 
 impl<'key, 'value> Cache<'key, 'value> {
     pub fn insert(&mut self, key: &'key str, value: &'value usize, ttl: Duration) -> Option<(&usize, Instant)> {
-        let now = Instant::now();
-        let expire = now + ttl;
+        let ts = Instant::now() + ttl;
+        let old_pair = self.map.insert(key, (value, ts));
 
-        self.ttl.entry(expire)
-            .and_modify(|x| {
-                x.insert(key);
+        if old_pair.is_some() {
+            self.clean_ttl(old_pair.unwrap().1, key);
+        }
+        self.ttl.entry(ts)
+            .and_modify(|keys| {
+                keys.insert(key);
             })
             .or_insert(HashSet::from([key]));
 
-        self.map.insert(key, (value, now))
+        old_pair
     }
 
     pub fn remove(&mut self, key: &'key str) -> Option<(&usize, Instant)> {
-        self.ttl.retain(|_, v| {
-            v.remove(key);
-            !v.is_empty()
+        let removed_pair = self.map.remove(key);
+        if removed_pair.is_some() {
+            self.clean_ttl(removed_pair.unwrap().1, key);
+        }
+        removed_pair
+    }
+
+    fn clean_ttl(&mut self, ts: Instant, key: &str) {
+        self.ttl.entry(ts).and_modify(|keys| {
+            keys.remove(key);
         });
-        self.map.remove(key)
+        if self.ttl.get(&ts).is_some() {
+            self.ttl.remove(&ts);
+        }
     }
 
     pub fn get(&self, key: &'key str) -> Option<(&usize, Instant)> {
-        let val = self.map.get(key);
-        if val.is_some() {
-            Some(*val.unwrap())
+        let val_ts = self.map.get(key);
+        if val_ts.is_some() {
+            Some(*val_ts.unwrap())
         } else {
             None
         }
@@ -57,11 +69,11 @@ impl<'key, 'value> Cache<'key, 'value> {
 
     pub fn expire(&mut self) {
         let now = &Instant::now();
-        self.ttl.retain(|k, v| {
-            let expired = k <= now;
+        self.ttl.retain(|ts, keys| {
+            let expired = ts <= now;
             if expired {
-                v.iter().for_each(|kk| {
-                    self.map.remove(*kk);
+                keys.iter().for_each(|key| {
+                    self.map.remove(*key);
                 });
             }
             !expired
